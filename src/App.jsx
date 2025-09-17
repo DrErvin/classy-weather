@@ -10,20 +10,12 @@ function getWeatherIcon(wmoCode) {
     [[51, 56, 61, 66, 80], "🌦"],
     [[53, 55, 63, 65, 57, 67, 81, 82], "🌧"],
     [[71, 73, 75, 77, 85, 86], "🌨"],
-    [([95], "🌩")],
+    [[95], "🌩"],
     [[96, 99], "⛈"],
   ]);
   const arr = [...icons.keys()].find((key) => key.includes(wmoCode));
   if (!arr) return "NOT FOUND";
   return icons.get(arr);
-}
-
-function convertToFlag(countryCode) {
-  const codePoints = countryCode
-    .toUpperCase()
-    .split("")
-    .map((char) => 127397 + char.charCodeAt());
-  return String.fromCodePoint(...codePoints);
 }
 
 function formatDay(dateStr) {
@@ -36,7 +28,8 @@ class App extends React.Component {
   state = {
     location: "",
     isLoading: false,
-    displayLocation: "",
+    displayName: "",
+    countryCode: "",
     weather: {},
   };
 
@@ -60,7 +53,8 @@ class App extends React.Component {
         geoData.results.at(0);
 
       this.setState({
-        displayLocation: `${name} ${convertToFlag(country_code)}`,
+        displayName: name,
+        countryCode: country_code,
       });
 
       // 2) Getting actual weather
@@ -78,20 +72,15 @@ class App extends React.Component {
 
   setLocation = (e) => this.setState({ location: e.target.value });
 
-  // useEffect []
   componentDidMount() {
-    // this.fetchWeather();
-
     this.setState({
       location: localStorage.getItem("location") || "",
     });
   }
 
-  // useEffect [location]
   componentDidUpdate(prevProps, prevState) {
     if (this.state.location !== prevState.location) {
       this.fetchWeather();
-
       localStorage.setItem("location", this.state.location);
     }
   }
@@ -110,7 +99,8 @@ class App extends React.Component {
         {this.state.weather.weathercode && (
           <Weather
             weather={this.state.weather}
-            location={this.state.displayLocation}
+            displayName={this.state.displayName}
+            countryCode={this.state.countryCode}
           />
         )}
       </div>
@@ -148,9 +138,18 @@ class Weather extends React.Component {
       weathercode: codes,
     } = this.props.weather;
 
+    const { displayName, countryCode } = this.props;
+
     return (
       <div>
-        <h2>Weather {this.props.location}</h2>
+        {/* ✨ UPDATED: Display the location name and an <img> tag for the flag */}
+        <h2>
+          Weather for {displayName}{" "}
+          <img
+            src={`https://flagcdn.com/24x18/${countryCode.toLowerCase()}.png`}
+            alt={`${displayName} flag`}
+          />
+        </h2>
         <ul className="weather">
           {dates.map((date, i) => (
             <Day
